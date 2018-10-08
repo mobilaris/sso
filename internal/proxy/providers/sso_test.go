@@ -38,6 +38,10 @@ func newSSOProvider() *SSOProvider {
 				Scheme: "https",
 				Host:   "auth.example.com",
 			},
+			ProxyProviderURL: &url.URL{
+				Scheme: "http",
+				Host:   "auth-int.example.com",
+			},
 		}, nil)
 }
 
@@ -241,8 +245,10 @@ func TestSSOProviderGetEmailAddress(t *testing.T) {
 				body, err := json.Marshal(tc.RedeemResponse)
 				testutil.Equal(t, nil, err)
 				p.RedeemURL, redeemServer = newTestServer(http.StatusOK, body)
+				p.ProxyRedeemURL, redeemServer = newTestServer(http.StatusOK, body)
 			} else {
 				p.RedeemURL, redeemServer = newCodeTestServer(400)
+				p.ProxyRedeemURL, redeemServer = newCodeTestServer(400)
 			}
 			defer redeemServer.Close()
 
@@ -253,6 +259,7 @@ func TestSSOProviderGetEmailAddress(t *testing.T) {
 				p.ProfileURL, profileServer = newTestServer(http.StatusOK, body)
 			} else {
 				p.RedeemURL, profileServer = newCodeTestServer(400)
+				p.ProxyRedeemURL, redeemServer = newCodeTestServer(400)
 			}
 			defer profileServer.Close()
 
