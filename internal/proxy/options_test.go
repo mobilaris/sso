@@ -16,6 +16,7 @@ func testOptions() *Options {
 	o.ClientSecret = "xyzzyplugh"
 	o.EmailDomains = []string{"*"}
 	o.ProviderURLString = "https://www.example.com"
+	o.ProxyProviderURLString = "https://internal.example.com"
 	o.UpstreamConfigsFile = "testdata/upstream_configs.yml"
 	o.Cluster = "sso"
 	o.Scheme = "http"
@@ -80,10 +81,12 @@ func TestDefaultProviderApiSettings(t *testing.T) {
 
 func TestProviderURLValidation(t *testing.T) {
 	testCases := []struct {
-		name              string
-		providerURLString string
-		expectedError     string
-		expectedSignInURL string
+		name                   string
+		providerURLString      string
+		proxyproviderURLString string
+		expectedError          string
+		expectedRedeemURL      string
+		expectedSignInURL      string
 	}{
 		{
 			name:              "http scheme preserved",
@@ -94,6 +97,17 @@ func TestProviderURLValidation(t *testing.T) {
 			name:              "https scheme preserved",
 			providerURLString: "https://provider.example.com",
 			expectedSignInURL: "https://provider.example.com/sign_in",
+		},
+		{
+			name:              "redeem string based on providerURL",
+			providerURLString: "https://provider.example.com",
+			expectedRedeemURL: "https://provider.example.com/redeem",
+		},
+		{
+			name:                   "redeem string based on proxyproviderURL",
+			providerURLString:      "https://provider.example.com",
+			proxyproviderURLString: "https://provider-internal.example.com",
+			expectedRedeemURL:      "https://provider-internal.example.com/redeem",
 		},
 		{
 			name:              "scheme required",
