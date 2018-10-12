@@ -220,11 +220,11 @@ func parseProviderInfo(o *Options) error {
 		return errors.New("provider-url must include scheme and host")
 	}
 
-	proxyproviderURL, err := url.Parse(o.ProxyProviderURLString)
+	proxyProviderURL, err := url.Parse(o.ProxyProviderURLString)
 	if err != nil {
 		return err
 	}
-	if proxyproviderURL.Scheme == "" || proxyproviderURL.Host == "" {
+	if proxyProviderURL.Scheme == "" || proxyProviderURL.Host == "" {
 		return errors.New("proxyprovider-url must include scheme and host")
 	}
 
@@ -232,7 +232,7 @@ func parseProviderInfo(o *Options) error {
 		ClientID:           o.ClientID,
 		ClientSecret:       o.ClientSecret,
 		ProviderURL:        providerURL,
-		ProxyProviderURL:   proxyproviderURL,
+		ProxyProviderURL:   proxyProviderURL,
 		Scope:              o.Scope,
 		SessionLifetimeTTL: o.SessionLifetimeTTL,
 		SessionValidTTL:    o.SessionValidTTL,

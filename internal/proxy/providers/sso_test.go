@@ -102,6 +102,11 @@ func TestSSOProviderDefaults(t *testing.T) {
 	testutil.Equal(t, fmt.Sprintf("%s/refresh", base), data.RefreshURL.String())
 	testutil.Equal(t, fmt.Sprintf("%s/validate", base), data.ValidateURL.String())
 	testutil.Equal(t, fmt.Sprintf("%s/profile", base), data.ProfileURL.String())
+	if data.ProxyProviderURL.String() == "" {
+		data.ProxyProviderURL = data.ProviderURL
+	}
+	proxybase := fmt.Sprintf("%s://%s", data.ProxyProviderURL.Scheme, data.ProxyProviderURL.Host)
+	testutil.Equal(t, fmt.Sprintf("%s/redeem", proxybase), data.ProxyRedeemURL.String())
 }
 
 type redeemResponse struct {
@@ -205,11 +210,12 @@ func TestSSOProviderGroups(t *testing.T) {
 
 func TestSSOProviderGetEmailAddress(t *testing.T) {
 	testCases := []struct {
-		Name            string
-		Code            string
-		ExpectedError   string
-		RedeemResponse  *redeemResponse
-		ProfileResponse *profileResponse
+		Name             string
+		Code             string
+		ExpectedError    string
+		RedeemResponse   *redeemResponse
+		ProfileResponse  *profileResponse
+		ProxyProviderURL *url.URL
 	}{
 		{
 			Name:          "redeem fails without code",
@@ -228,6 +234,24 @@ func TestSSOProviderGetEmailAddress(t *testing.T) {
 				ExpiresIn:    10,
 				RefreshToken: "refresh12345",
 				Email:        "michael.bland@gsa.gov",
+			},
+			ProfileResponse: &profileResponse{
+				Email:  "michael.bland@gsa.gov",
+				Groups: []string{"core@gsa.gov"},
+			},
+		},
+		{
+			Name: "redeem-internal successful",
+			Code: "code1234",
+			RedeemResponse: &redeemResponse{
+				AccessToken:  "a1234",
+				ExpiresIn:    10,
+				RefreshToken: "refresh12345",
+				Email:        "michael.bland@gsa.gov",
+			},
+			ProxyProviderURL: &url.URL{
+				Scheme: "http",
+				Host:   "auth-int.example.com",
 			},
 			ProfileResponse: &profileResponse{
 				Email:  "michael.bland@gsa.gov",
@@ -263,6 +287,7 @@ func TestSSOProviderGetEmailAddress(t *testing.T) {
 			}
 			defer profileServer.Close()
 
+			p.ProxyProviderURL = tc.ProxyProviderURL
 			session, err := p.Redeem("http://redirect/", tc.Code)
 			if tc.RedeemResponse != nil {
 				testutil.Equal(t, nil, err)

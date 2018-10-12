@@ -83,7 +83,7 @@ func TestProviderURLValidation(t *testing.T) {
 	testCases := []struct {
 		name                   string
 		providerURLString      string
-		proxyproviderURLString string
+		proxyProviderURLString string
 		expectedError          string
 		expectedRedeemURL      string
 		expectedSignInURL      string
@@ -104,9 +104,9 @@ func TestProviderURLValidation(t *testing.T) {
 			expectedRedeemURL: "https://provider.example.com/redeem",
 		},
 		{
-			name:                   "redeem string based on proxyproviderURL",
+			name:                   "redeem string based on proxyProviderURL",
 			providerURLString:      "https://provider.example.com",
-			proxyproviderURLString: "https://provider-internal.example.com",
+			proxyProviderURLString: "https://provider-internal.example.com",
 			expectedRedeemURL:      "https://provider-internal.example.com/redeem",
 		},
 		{
