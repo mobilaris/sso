@@ -388,8 +388,8 @@ func (p *SSOProvider) ValidateSessionState(s *SessionState, allowedGroups []stri
 }
 
 // signRedirectURL signs the redirect url string, given a timestamp, and returns it
-func signRedirectURL(clientSecret, rawRedirect string, timestamp time.Time) string {
-	h := hmac.New(sha256.New, []byte(clientSecret))
+func (p *SSOProvider) signRedirectURL(rawRedirect string, timestamp time.Time) string {
+	h := hmac.New(sha256.New, []byte(p.Data().ClientSecret))
 	h.Write([]byte(rawRedirect))
 	h.Write([]byte(fmt.Sprint(timestamp.Unix())))
 	return base64.URLEncoding.EncodeToString(h.Sum(nil))
@@ -397,8 +397,7 @@ func signRedirectURL(clientSecret, rawRedirect string, timestamp time.Time) stri
 
 // GetSignInURL with typical oauth parameters
 func (p *SSOProvider) GetSignInURL(redirectURL *url.URL, state string) *url.URL {
-	var a url.URL
-	a = *p.Data().SignInURL
+	a := *p.Data().SignInURL
 	now := time.Now()
 	rawRedirect := redirectURL.String()
 	params, _ := url.ParseQuery(a.RawQuery)
@@ -408,21 +407,20 @@ func (p *SSOProvider) GetSignInURL(redirectURL *url.URL, state string) *url.URL 
 	params.Set("response_type", "code")
 	params.Add("state", state)
 	params.Set("ts", fmt.Sprint(now.Unix()))
-	params.Set("sig", signRedirectURL(p.Data().ClientSecret, rawRedirect, now))
+	params.Set("sig", p.signRedirectURL(rawRedirect, now))
 	a.RawQuery = params.Encode()
 	return &a
 }
 
 // GetSignOutURL creates and returns the sign out URL, given a redirectURL
 func (p *SSOProvider) GetSignOutURL(redirectURL *url.URL) *url.URL {
-	var a url.URL
-	a = *p.Data().SignOutURL
+	a := *p.Data().SignOutURL
 	now := time.Now()
 	rawRedirect := redirectURL.String()
 	params, _ := url.ParseQuery(a.RawQuery)
 	params.Add("redirect_uri", rawRedirect)
 	params.Set("ts", fmt.Sprint(now.Unix()))
-	params.Set("sig", signRedirectURL(p.Data().ClientSecret, rawRedirect, now))
+	params.Set("sig", p.signRedirectURL(rawRedirect, now))
 	a.RawQuery = params.Encode()
 	return &a
 }
