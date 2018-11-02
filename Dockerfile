@@ -16,8 +16,9 @@ WORKDIR /go/src/github.com/buzzfeed/sso
 
 COPY cmd ./cmd
 COPY internal ./internal
-RUN cd cmd/sso-auth && go build -o /bin/sso-auth
-RUN cd cmd/sso-proxy && go build -o /bin/sso-proxy
+RUN go get -u github.com/derekparker/delve/cmd/dlv
+RUN cd cmd/sso-auth && go build -gcflags "all=-N -l" -o /bin/sso-auth
+RUN cd cmd/sso-proxy && go build -gcflags "all=-N -l" -o /bin/sso-proxy
 
 
 # =============================================================================
@@ -29,3 +30,5 @@ FROM debian:stable-slim
 RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
 WORKDIR /sso
 COPY --from=build /bin/sso-* /bin/
+COPY --from=build /go/bin/dlv /dlv
+

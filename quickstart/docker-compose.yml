@@ -23,6 +23,11 @@ services:
   sso-proxy:
     image: buzzfeed/sso:latest # change this to `build: ..` to try local changes
     entrypoint: /bin/sso-proxy
+    #entrypoint: /dlv exec /bin/sso-proxy --listen=:40000 --headless=true --api-version=2
+    security_opt:
+      - "seccomp=unconfined"
+    cap_add:
+      - sys_ptrace
     environment:
       # Allow any google account to log in for demo purposes
       - EMAIL_DOMAIN=*
@@ -53,10 +58,14 @@ services:
 
       # Tells nginx-proxy service how to route requests to this service
       - VIRTUAL_HOST=*.sso.localtest.me
+      - VIRTUAL_PORT=4180
     volumes:
       - ./upstream_configs.yml:/sso/upstream_configs.yml:ro
     expose:
       - 4180
+      - 40000
+    ports:
+      - 40000:40000
     # Because the sso-auth.localtest.me domain will not resolve correctly
     # within the sso-proxy container for sso-proxy => sso-auth communication,
     # we must manually add an /etc/hosts entry pointing at the docker-compose
@@ -66,15 +75,21 @@ services:
 
   sso-auth:
     image: buzzfeed/sso:latest # change this to `build: ..` to try local changes
+    # entrypoint: /dlv exec /bin/sso-auth --listen=:40001 --headless=true --api-version=2
     entrypoint: /bin/sso-auth
+    security_opt:
+      - "seccomp=unconfined"
+    cap_add:
+      - sys_ptrace
     env_file:
       ./env
     environment:
+      - HTTPS_METHOD=nohttps
       # Allow any google account to log in for demo purposes
       - SSO_EMAIL_DOMAIN=*
 
       - HOST=sso-auth.localtest.me
-      - REDIRECT_URL=http://sso-auth.localtest.me
+      - REDIRECT_URL=https://sso-auth.localtest.me
       - PROXY_ROOT_DOMAIN=localtest.me
 
       # These values must match sso-proxy's CLIENT_ID and CLIENT_SECRET values
@@ -102,9 +117,12 @@ services:
 
       # Tells nginx-proxy service how to route requests to this service
       - VIRTUAL_HOST=sso-auth.localtest.me
+      - VIRTUAL_PORT=4180
     expose:
       - 4180
-
+      - 40001
+    ports:
+      - 40001:40001
   # ===========================================================================
   # Upstream services protected by sso
   #
@@ -130,9 +148,11 @@ services:
   nginx-proxy:
     image: jwilder/nginx-proxy:latest
     ports:
-      - "80:80"
+      - 80:80
+      - 443:443
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./certs:/etc/nginx/certs
 
 networks:
   default:

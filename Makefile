@@ -23,3 +23,6 @@ clean:
 imagepush:
 	docker build -t buzzfeed/sso-dev:$(commit) .
 	docker push buzzfeed/sso-dev:$(commit)
+
+docker:
+	DOCKER_BUILDKIT=1 docker build -t buzzfeed/sso:latest . 
